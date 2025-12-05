@@ -3,77 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { width: 350px; margin: 0; font-family: 'Segoe UI', sans-serif; background: #f4f6f8; color: #333; }
-        .header { background: #2c3e50; color: #fff; padding: 10px 15px; font-weight: 600; font-size: 14px; border-bottom: 3px solid #34495e; }
-        
-        .container { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-        
-        /* 卡片样式 */
-        .card { background: #fff; border: 1px solid #dce1e7; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card-title { background: #eaeff2; padding: 8px 12px; font-size: 11px; font-weight: 700; color: #57606f; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #dce1e7; display: flex; justify-content: space-between; align-items: center; }
-        .card-body { padding: 10px 12px; font-size: 12px; }
+        /* Removed Google Fonts import to avoid fallback issues and improve loading speed */
 
-        /* 状态徽章 */
-        .badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; color: #fff; font-weight: 600; }
-        .badge.gray { background: #95a5a6; }
-        .badge.green { background: #27ae60; }
-        .badge.red { background: #c0392b; }
+        :root {
+            /* Darker background for better contrast */
+            --bg: #0e0e11;
+            --panel: #1a1a20;
+            --edge: #2d2d35;
+            
+            /* Toned down neon colors to reduce eye strain */
+            --glow: #d63384;   /* Softer Magenta */
+            --green: #20c997;  /* Teal/Green */
+            --amber: #ffc107;  /* Standard Warning */
+            --red: #dc3545;    /* Standard Error */
+            --text: #e9ecef;   /* Off-white text */
+            --muted: #adb5bd;  /* Gray text */
+            --accent: #0dcaf0; /* Cyan */
+        }
 
-        /* 列表 */
-        ul { margin: 0; padding-left: 18px; line-height: 1.5; color: #2c3e50; }
-        li { margin-bottom: 2px; }
+        * { box-sizing: border-box; }
 
-        /* 输入框与按钮 */
-        .input-group { display: flex; margin-bottom: 8px; }
-        input[type="text"] { flex: 1; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px 0 0 4px; font-family: monospace; font-size: 11px; outline: none; }
-        input[type="text"]:focus { border-color: #3498db; }
+        body {
+            margin: 0;
+            width: 520px; /* Wider interface */
+            /* System monospace stack for clean "terminal" look without pixelation artifacts */
+            font-family: Consolas, Menlo, Monaco, "Courier New", monospace;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px; /* Larger base font */
+            line-height: 1.5;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #15151a;
+            border-bottom: 1px solid var(--edge);
+            /* Removed heavy box-shadow/glow */
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+
+        .header .logo-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--glow);
+            border-radius: 2px; /* Square-ish */
+            box-shadow: 0 0 5px var(--glow);
+        }
+
+        .container { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--edge);
+            border-radius: 4px; /* Slight roundness */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--edge);
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .panel-body { padding: 12px; font-size: 12px; }
+
+        /* Clean badges without blur/shadow */
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid transparent;
+        }
+        .status-badge.tone-warn { color: var(--amber); border-color: rgba(255, 193, 7, 0.2); }
+        .status-badge.tone-ok { color: var(--green); border-color: rgba(32, 201, 151, 0.2); }
+        .status-badge.tone-alert { color: var(--glow); border-color: rgba(214, 51, 132, 0.2); background: rgba(214, 51, 132, 0.1); }
+        .status-badge.tone-err { color: var(--red); border-color: rgba(220, 53, 69, 0.2); }
+
+        ul { margin: 0; padding-left: 20px; color: var(--text); }
+        li { margin-bottom: 6px; }
+        li::marker { color: var(--edge); font-size: 10px; } /* Subtle markers */
+
+        /* Modern Flat Buttons */
+        .action-btn {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--edge);
+            background: #212529;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .action-btn:hover {
+            background: #2c3036;
+            border-color: var(--muted);
+        }
+        .action-btn:active { transform: translateY(1px); }
         
-        button { border: none; cursor: pointer; color: #fff; font-weight: 600; transition: 0.2s; padding: 8px; font-size: 11px; }
-        .btn-scan { background: #3498db; width: 100%; border-radius: 4px; }
-        .btn-scan:hover { background: #2980b9; }
-        
-        .btn-exploit { background: #e74c3c; border-radius: 0 4px 4px 0; padding: 0 15px; }
-        .btn-exploit:hover { background: #c0392b; }
-        .btn-exploit:disabled { background: #95a5a6; cursor: not-allowed; }
+        .action-btn.is-loading {
+            color: var(--muted);
+            cursor: wait;
+            background: repeating-linear-gradient(
+                45deg,
+                #212529,
+                #212529 10px,
+                #25292d 10px,
+                #25292d 20px
+            );
+        }
 
-        /* 结果区域 */
-        .result-box { margin-top: 8px; border-top: 1px dashed #eee; padding-top: 8px; display: none; }
-        .console-out { background: #2d3436; color: #00cec9; padding: 8px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 11px; margin-top: 5px; white-space: pre-wrap; word-break: break-all; }
-        .error-out { color: #e74c3c; font-weight: bold; }
+        .input-group { display: flex; gap: 8px; }
+        .code-input {
+            flex: 1;
+            padding: 12px; /* More padding */
+            border: 1px solid var(--edge);
+            background: #000;
+            color: var(--green); /* Matrix green text */
+            font-family: Consolas, "Courier New", monospace; /* Explicit monospace */
+            font-size: 14px; /* Larger font */
+            border-radius: 3px;
+        }
+        .code-input:focus { outline: 1px solid var(--green); }
+
+        .btn-danger {
+            width: auto;
+            min-width: 80px;
+            background: rgba(220, 53, 69, 0.1);
+            border-color: rgba(220, 53, 69, 0.3);
+            color: var(--red);
+        }
+        .btn-danger:hover {
+            background: rgba(220, 53, 69, 0.2);
+            border-color: var(--red);
+        }
+
+        .result-box { margin-top: 12px; border-top: 1px solid var(--edge); padding-top: 12px; display: none; }
+
+        .console-out {
+            background: #050505;
+            color: var(--text);
+            padding: 12px;
+            border-radius: 3px;
+            border: 1px solid var(--edge);
+            font-family: Consolas, "Courier New", monospace; /* Explicit monospace */
+            font-size: 13px; /* Larger font */
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px; /* Taller */
+            overflow-y: auto;
+        }
+        
+        .hint { color: var(--muted); font-size: 11px; margin-top: 8px; font-style: italic; }
     </style>
 </head>
 <body>
-    <div class="header">RSC Security Tool</div>
+    <div class="header">
+        <div class="logo-dot"></div>
+        RSC Security Tool
+    </div>
 
     <div class="container">
-        <div class="card">
-            <div class="card-title">
-                1. Passive Detection
-                <span id="passive-badge" class="badge gray">SCANNING</span>
+        <div class="panel">
+            <div class="panel-head">
+                <span>1. Passive Detection</span>
+                <span id="passive-badge" class="status-badge tone-warn">SCANNING</span>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 <ul id="passive-list"><li>Waiting for page...</li></ul>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-title">2. Active Fingerprint (RSC:1)</div>
-            <div class="card-body">
-                <button id="btnFingerprint" class="btn-scan">Start Fingerprint Probe</button>
+        <div class="panel">
+            <div class="panel-head">
+                <span>2. Active Fingerprint</span>
+                <span class="status-badge tone-ok">READY</span>
+            </div>
+            <div class="panel-body">
+                <button id="btnFingerprint" class="action-btn">Start Probe</button>
                 <div id="fingerprint-result" class="result-box">
                     <ul id="active-list"></ul>
                 </div>
             </div>
         </div>
 
-        <div class="card" style="border-color: #fab1a0;">
-            <div class="card-title" style="background: #fff0eb; color: #c0392b;">3. RCE Exploit (CVE-2025-55182)</div>
-            <div class="card-body">
+        <div class="panel">
+            <div class="panel-head">
+                <span>3. RCE Exploit (CVE-2025-55182)</span>
+                <span class="status-badge tone-err">DANGER</span>
+            </div>
+            <div class="panel-body">
                 <div class="input-group">
-                    <input type="text" id="cmdInput" placeholder="Command (echo vulnerability_test)" value="echo vulnerability_test">
-                    <button id="btnExploit" class="btn-exploit">EXEC</button>
+                    <input type="text" id="cmdInput" class="code-input" placeholder="Command..." value="echo vulnerability_test">
+                    <button id="btnExploit" class="action-btn btn-danger">EXEC</button>
                 </div>
-                <div id="exploit-status" style="font-size: 10px; color: #7f8c8d; display:none;">Sending payload...</div>
+                <div id="exploit-status" class="hint" style="display:none;">Sending payload...</div>
                 <div id="exploit-result" class="result-box">
                     <div id="rce-output" class="console-out"></div>
                 </div>

