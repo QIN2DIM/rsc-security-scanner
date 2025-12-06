@@ -36,7 +36,7 @@ CHROME_TEMP="$DIST/_chrome_temp"
 mkdir -p "$CHROME_TEMP"
 
 for file in "${FILES[@]}"; do
-    [ -f "$ROOT/$file" ] && cp "$ROOT/$file" "$CHROME_TEMP/"
+    [ -f "$ROOT/src/$file" ] && cp "$ROOT/src/$file" "$CHROME_TEMP/"
 done
 [ -d "$ROOT/images" ] && cp -r "$ROOT/images" "$CHROME_TEMP/"
 [ -d "$ROOT/icons" ] && cp -r "$ROOT/icons" "$CHROME_TEMP/"
@@ -55,15 +55,15 @@ mkdir -p "$FIREFOX_TEMP"
 
 for file in "${FILES[@]}"; do
     [ "$file" = "manifest.json" ] && continue
-    [ -f "$ROOT/$file" ] && cp "$ROOT/$file" "$FIREFOX_TEMP/"
+    [ -f "$ROOT/src/$file" ] && cp "$ROOT/src/$file" "$FIREFOX_TEMP/"
 done
 
 # Use Firefox manifest
-if [ -f "$ROOT/manifest.firefox.json" ]; then
-    cp "$ROOT/manifest.firefox.json" "$FIREFOX_TEMP/manifest.json"
+if [ -f "$ROOT/src/manifest.firefox.json" ]; then
+    cp "$ROOT/src/manifest.firefox.json" "$FIREFOX_TEMP/manifest.json"
 else
     echo "  [!] manifest.firefox.json not found!"
-    cp "$ROOT/manifest.json" "$FIREFOX_TEMP/manifest.json"
+    cp "$ROOT/src/manifest.json" "$FIREFOX_TEMP/manifest.json"
 fi
 
 [ -d "$ROOT/images" ] && cp -r "$ROOT/images" "$FIREFOX_TEMP/"
