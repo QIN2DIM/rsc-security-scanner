@@ -286,14 +286,47 @@
             padding: 12px;
             border-radius: 3px;
             border: 1px solid var(--edge);
-            font-family: Consolas, "Courier New", monospace; /* Explicit monospace */
-            font-size: 13px; /* Larger font */
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 13px;
             white-space: pre-wrap;
-            word-break: break-all;
-            /* max-height: 300px; REMOVED fixed height to allow flex growth */
+            word-break: break-word;
+            overflow-wrap: break-word;
             flex-grow: 1;
+            overflow-x: hidden;
             overflow-y: auto;
             min-height: 150px;
+        }
+
+        /* Custom scrollbar styling for dark theme */
+        .console-out::-webkit-scrollbar {
+            width: 6px;
+        }
+        .console-out::-webkit-scrollbar-track {
+            background: #0a0a0a;
+            border-radius: 3px;
+        }
+        .console-out::-webkit-scrollbar-thumb {
+            background: var(--edge);
+            border-radius: 3px;
+        }
+        .console-out::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        /* Global scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--edge);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
         }
         
         .hint { color: var(--muted); font-size: 11px; margin-top: 8px; font-style: italic; flex-shrink: 0; }
