@@ -136,6 +136,7 @@ async function performExploit(cmd) {
                 return { 
                     success: true, 
                     output: decodedStr,
+                    rawBase64: cleanBase64, // Debug: show raw base64
                     waf: wafName
                 };
             } catch (parseError) {
