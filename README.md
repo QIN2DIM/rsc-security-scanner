@@ -17,4 +17,6 @@ A browser extension for detecting **React Server Components (RSC)** and **Next.j
 
 ## Gallery
 
-![](./docs/assets/PixPin_2025-12-06_10-11-44.png)
+![](./docs/assets/PixPin_2025-12-06_10-37-32.png)
+
+![](./docs/assets/PixPin_2025-12-06_10-48-00.png)

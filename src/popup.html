@@ -2,429 +2,363 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <title>RSC Security Scanner</title>
     <style>
-        html {
-            height: 100%;
-        }
-        /* Removed Google Fonts import to avoid fallback issues and improve loading speed */
-
+        /* Modern Reset & Variables */
         :root {
-            /* Darker background for better contrast */
-            --bg: #0e0e11;
-            --panel: #1a1a20;
-            --edge: #2d2d35;
+            /* Palette: Cyberpunk / Dark Mode */
+            --bg-deep: #050507;
+            --bg-panel: #0f1014;
+            --bg-input: #000000;
+            --border: #22232b;
             
-            /* Toned down neon colors to reduce eye strain */
-            --glow: #d63384;   /* Softer Magenta */
-            --green: #20c997;  /* Teal/Green */
-            --amber: #ffc107;  /* Standard Warning */
-            --red: #dc3545;    /* Standard Error */
-            --text: #e9ecef;   /* Off-white text */
-            --muted: #adb5bd;  /* Gray text */
-            --accent: #0dcaf0; /* Cyan */
+            /* Accents */
+            --accent: #64ffda; /* Teal */
+            --accent-glow: rgba(100, 255, 218, 0.15);
+            --danger: #ff3366; /* Neon Red */
+            --danger-glow: rgba(255, 51, 102, 0.15);
+            --warn: #ffb86c;   /* Soft Orange */
+            --text-main: #e6f1f5;
+            --text-dim: #8892b0;
+            
+            /* Fonts */
+            --font-mono: 'SF Mono', 'Fira Code', Consolas, monospace;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        * { box-sizing: border-box; }
+        /* Base Styles */
+        * { box-sizing: border-box; outline: none; }
 
-        body {
+        html, body {
+            width: 480px;
+            height: 600px; /* Chrome popup max height */
             margin: 0;
-            width: 520px; /* Wider interface */
-            /* System monospace stack for clean "terminal" look without pixelation artifacts */
-            font-family: Consolas, Menlo, Monaco, "Courier New", monospace;
-            background: var(--bg);
-            color: var(--text);
-            font-size: 13px; /* Larger base font */
-            line-height: 1.5;
-            min-height: 500px; /* Use min-height instead of height: 100vh to ensure content visibility */
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Detached window styles - fill the entire window */
-        body.is-detached {
-            width: 100%;
-            height: 100vh;
-            min-height: 100vh;
+            padding: 0;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 13px;
         }
         
-        html:has(body.is-detached) {
-            height: 100%;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            /* gap: 10px; removed to use justify-content: space-between if needed, or margin-auto */
-            padding: 12px 16px;
-            background: #15151a;
-            border-bottom: 1px solid var(--edge);
-            /* Removed heavy box-shadow/glow */
-            font-weight: 700;
-            color: var(--accent);
-            letter-spacing: 0.5px;
-            flex-shrink: 0;
-        }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-grow: 1;
-        }
-
-        .header .logo-dot {
-            width: 10px;
-            height: 10px;
-            background: var(--glow);
-            border-radius: 2px; /* Square-ish */
-            box-shadow: 0 0 5px var(--glow);
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            color: var(--muted);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s, background 0.2s;
-        }
-        .icon-btn:hover {
-            color: var(--text);
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Tabs Navigation */
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--edge);
-            background: #15151a;
-            flex-shrink: 0;
-        }
-        .tab-btn {
-            flex: 1;
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid transparent;
-            color: var(--muted);
-            padding: 12px 8px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            transition: all 0.2s;
-        }
-        .tab-btn:hover {
-            color: var(--text);
-            background: rgba(255, 255, 255, 0.02);
-        }
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-        }
-
-        .container { 
-            padding: 16px; 
-            flex-grow: 1;
+        body {
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
-            gap: 0; /* Remove gap since we only show one tab */
+            overflow: hidden; /* Body doesn't scroll, viewport does */
         }
+        
+        body.is-detached { width: 100vw; height: 100vh; }
 
-        .tab-content {
-            display: none;
-            flex-direction: column;
-            flex-grow: 1;
-            height: 100%;
-        }
-        .tab-content.active {
-            display: flex;
-        }
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--edge);
-            border-radius: 4px; /* Slight roundness */
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            flex-grow: 1;
+        /* --- Header --- */
+        .app-header {
             display: flex;
-            flex-direction: column;
-        }
-
-        .panel-head {
-            display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--edge);
-            background: rgba(255, 255, 255, 0.02);
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--muted);
-            flex-shrink: 0;
+            padding: 16px 20px;
+            background: rgba(15, 16, 20, 0.95);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(8px);
+            position: sticky; top: 0; z-index: 100;
+            user-select: none;
         }
 
-        .panel-body { 
-            padding: 12px; 
-            font-size: 12px; 
-            flex-grow: 1;
+        .brand-area {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 12px;
         }
 
-        /* Clean badges without blur/shadow */
-        .status-badge {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
+        .pulse-dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .brand-title {
+            font-weight: 700;
+            font-size: 14px;
             letter-spacing: 0.5px;
-            background: rgba(255, 255, 255, 0.05);
+            background: linear-gradient(90deg, #fff, var(--text-dim));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            background: var(--border);
+            color: var(--text-dim);
             border: 1px solid transparent;
         }
-        .status-badge.tone-warn { color: var(--amber); border-color: rgba(255, 193, 7, 0.2); }
-        .status-badge.tone-ok { color: var(--green); border-color: rgba(32, 201, 151, 0.2); }
-        .status-badge.tone-alert { color: var(--glow); border-color: rgba(214, 51, 132, 0.2); background: rgba(214, 51, 132, 0.1); }
-        .status-badge.tone-err { color: var(--red); border-color: rgba(220, 53, 69, 0.2); }
+        
+        /* Badge States */
+        .status-badge.scanning { color: var(--warn); border-color: rgba(255, 184, 108, 0.3); animation: blink 1.5s infinite alternate; }
+        .status-badge.vulnerable { color: var(--danger); background: var(--danger-glow); border-color: var(--danger); box-shadow: 0 0 10px var(--danger-glow); }
+        .status-badge.safe { color: var(--accent); background: var(--accent-glow); border-color: var(--accent); }
 
-        ul { margin: 0; padding-left: 20px; color: var(--text); }
-        li { margin-bottom: 6px; }
-        li::marker { color: var(--edge); font-size: 10px; } /* Subtle markers */
-
-        /* Modern Flat Buttons */
-        .action-btn {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--edge);
-            background: #212529;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 12px;
+        /* --- Navigation --- */
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 16px;
+        }
+        
+        .tab-item {
+            padding: 14px 16px;
+            font-size: 11px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 3px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            flex-shrink: 0;
+            color: var(--text-dim);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+            background: none; border: none;
         }
-        .action-btn:hover {
-            background: #2c3036;
-            border-color: var(--muted);
-        }
-        .action-btn:active { transform: translateY(1px); }
-        
-        .action-btn.is-loading {
-            color: var(--muted);
-            cursor: wait;
-            background: repeating-linear-gradient(
-                45deg,
-                #212529,
-                #212529 10px,
-                #25292d 10px,
-                #25292d 20px
-            );
+        .tab-item:hover { color: var(--text-main); }
+        .tab-item.active { color: var(--accent); }
+        .tab-item.active::after {
+            content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px;
+            background: var(--accent);
+            box-shadow: 0 -2px 8px var(--accent-glow);
         }
 
-        .input-group { display: flex; gap: 8px; flex-shrink: 0; }
-        .code-input {
+        /* --- Content Layout --- */
+        .viewport {
             flex: 1;
-            padding: 12px; /* More padding */
-            border: 1px solid var(--edge);
-            background: #000;
-            color: var(--green); /* Matrix green text */
-            font-family: Consolas, "Courier New", monospace; /* Explicit monospace */
-            font-size: 14px; /* Larger font */
-            border-radius: 3px;
-        }
-        .code-input:focus { outline: 1px solid var(--green); }
-
-        .btn-danger {
-            width: auto;
-            min-width: 80px;
-            background: rgba(220, 53, 69, 0.1);
-            border-color: rgba(220, 53, 69, 0.3);
-            color: var(--red);
-        }
-        .btn-danger:hover {
-            background: rgba(220, 53, 69, 0.2);
-            border-color: var(--red);
-        }
-
-        .result-box { 
-            margin-top: 12px; 
-            border-top: 1px solid var(--edge); 
-            padding-top: 12px; 
-            display: none; /* Toggled by JS */
-            flex-direction: column;
-            flex-grow: 1;
+            padding: 20px;
+            padding-bottom: 30px; /* Extra space at bottom */
+            overflow-y: auto;
             position: relative;
         }
 
-        /* Specific rule for exploit result box to make it take full height */
-        #exploit-result {
-            display: none; /* Hidden by default */
+        .view-panel {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            animation: slideUp 0.3s ease-out;
         }
-        #exploit-result.is-visible {
+        .view-panel.active { display: flex; }
+
+        /* Cards */
+        .ui-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
             display: flex;
+            flex-direction: column;
         }
 
-        .console-out {
-            background: #050505;
-            color: var(--text);
-            padding: 12px;
-            border-radius: 3px;
-            border: 1px solid var(--edge);
-            font-family: Consolas, "Courier New", monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            flex-grow: 1;
-            overflow-x: hidden;
-            overflow-y: auto;
-            min-height: 150px;
+        .card-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+            display: flex; justify-content: space-between;
         }
 
-        /* Custom scrollbar styling for dark theme */
-        .console-out::-webkit-scrollbar {
-            width: 6px;
+        /* List Styles */
+        .log-list {
+            list-style: none; margin: 0; padding: 0;
+            font-family: var(--font-mono);
+            font-size: 12px;
         }
-        .console-out::-webkit-scrollbar-track {
-            background: #0a0a0a;
-            border-radius: 3px;
+        .log-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            gap: 10px;
         }
-        .console-out::-webkit-scrollbar-thumb {
-            background: var(--edge);
-            border-radius: 3px;
-        }
-        .console-out::-webkit-scrollbar-thumb:hover {
-            background: var(--muted);
-        }
+        .log-list li:last-child { border-bottom: none; }
+        
+        .log-icon { flex-shrink: 0; color: var(--accent); }
+        .log-item-warn { color: var(--warn); }
+        .log-item-danger { color: var(--danger); font-weight: bold; }
+        .log-item-dim { color: var(--text-dim); font-style: italic; }
 
-        /* Global scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--bg);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--edge);
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--muted);
+        /* Inputs & Consoles */
+        .cmd-input-wrapper {
+            display: flex;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            border-radius: 4px;
+            padding: 2px;
+            margin-bottom: 12px;
         }
         
-        .hint { color: var(--muted); font-size: 11px; margin-top: 8px; font-style: italic; flex-shrink: 0; }
+        .cmd-prefix {
+            padding: 10px 12px;
+            color: var(--accent);
+            font-family: var(--font-mono);
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .cmd-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 10px 0;
+        }
+        
+        .terminal-output {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.5;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            color: var(--text-dim);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Buttons */
+        .action-button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.05);
+            background: #1a1b21;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-button:hover { background: #25262e; border-color: var(--text-dim); }
+        .action-button:active { transform: translateY(1px); }
+
+        .btn-red {
+            background: rgba(255, 51, 102, 0.1);
+            color: var(--danger);
+            border-color: var(--danger-glow);
+        }
+        .btn-red:hover {
+            background: rgba(255, 51, 102, 0.25);
+            box-shadow: 0 0 15px var(--danger-glow);
+            border-color: var(--danger);
+        }
+
+        .icon-btn {
+            background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px;
+        }
+        .icon-btn:hover { color: var(--text-main); }
 
         /* Copy Button */
+        .terminal-wrapper {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
         .copy-btn {
             position: absolute;
-            top: 18px; /* 12px padding + a bit offset */
-            right: 18px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--edge);
-            color: var(--muted);
-            padding: 4px 8px;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 5px 10px;
             font-size: 10px;
-            border-radius: 3px;
+            font-weight: 600;
+            border-radius: 4px;
             cursor: pointer;
             z-index: 10;
             transition: all 0.2s;
+            text-transform: uppercase;
         }
         .copy-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: var(--text);
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            border-color: var(--text-dim);
         }
+        .copy-btn.copied {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Keyframes */
+        @keyframes blink { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-title">
-            <div class="logo-dot"></div>
-            RSC Security Tool
+    <div class="app-header">
+        <div class="brand-area">
+            <div class="pulse-dot"></div>
+            <div class="brand-title">RSC DETECTOR</div>
         </div>
-        <div class="header-actions">
-            <button id="btnDetach" class="icon-btn" title="Open in new window">
-                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                    <polyline points="15 3 21 3 21 9"></polyline>
-                    <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
+        
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div id="status-badge" class="status-badge">READY</div>
+            <button id="btn-detach" class="icon-btn" title="Open in New Window">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
             </button>
         </div>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="tab-exploit">Exploit</button>
-        <button class="tab-btn" data-tab="tab-passive">Detection</button>
-        <button class="tab-btn" data-tab="tab-active">Fingerprint</button>
+    <div class="nav-tabs">
+        <button class="tab-item active" data-target="view-scanner">Scanner</button>
+        <button class="tab-item" data-target="view-exploit">Exploit</button>
     </div>
 
-    <div class="container">
-        <!-- 1. RCE Exploit Tab (Default) -->
-        <div id="tab-exploit" class="tab-content active">
-            <div class="panel">
-                <div class="panel-head">
-                    <span>CVE-2025-55182</span>
-                    <span class="status-badge tone-err">DANGER</span>
-                </div>
-                <div class="panel-body">
-                    <div class="input-group">
-                        <input type="text" id="cmdInput" class="code-input" placeholder="Command...">
-                        <button id="btnExploit" class="action-btn btn-danger">EXEC</button>
-                    </div>
-                    <div id="exploit-status" class="hint" style="display:none;">Sending payload...</div>
-                    
-                    <!-- Force display flex for relative positioning -->
-                    <div id="exploit-result" class="result-box is-visible">
-                        <button id="btnCopy" class="copy-btn">COPY</button>
-                        <div id="rce-output" class="console-out"></div>
-                    </div>
-                </div>
+    <div class="viewport">
+        <!-- 1. Scanner View (Merged Detection + Fingerprint) -->
+        <div id="view-scanner" class="view-panel active">
+            <!-- Detection Log -->
+            <div class="ui-card">
+                <div class="card-title">Diagnostics Log</div>
+                <ul id="scan-log" class="log-list">
+                    <li class="log-item-dim">Initializing scanner...</li>
+                </ul>
             </div>
+
+            <!-- Manual Trigger -->
+            <button id="btn-re-probe" class="action-button">Restart Probe</button>
         </div>
 
-        <!-- 2. Passive Detection Tab -->
-        <div id="tab-passive" class="tab-content">
-            <div class="panel">
-                <div class="panel-head">
-                    <span>Passive Status</span>
-                    <span id="passive-badge" class="status-badge tone-warn">SCANNING</span>
+        <!-- 2. Exploit View -->
+        <div id="view-exploit" class="view-panel">
+            <div class="ui-card">
+                <div class="card-title">Payload Execution</div>
+                
+                <div class="cmd-input-wrapper">
+                    <div class="cmd-prefix">$</div>
+                    <input type="text" id="cmd-input" class="cmd-input" placeholder="Enter command..." value="id && pwd && ls -lha">
                 </div>
-                <div class="panel-body">
-                    <ul id="passive-list"><li>Waiting for page...</li></ul>
-                </div>
+                
+                <button id="btn-exploit" class="action-button btn-red">SEND PAYLOAD</button>
             </div>
-        </div>
-
-        <!-- 3. Active Fingerprint Tab -->
-        <div id="tab-active" class="tab-content">
-            <div class="panel">
-                <div class="panel-head">
-                    <span>Active Probe</span>
-                    <span class="status-badge tone-ok">READY</span>
-                </div>
-                <div class="panel-body">
-                    <button id="btnFingerprint" class="action-btn">Start Probe</button>
-                    <div id="fingerprint-result" class="result-box" style="display:block; border:none; padding-top:12px;">
-                        <ul id="active-list"></ul>
-                    </div>
-                </div>
+            
+            <div class="terminal-wrapper">
+                <button id="btn-copy" class="copy-btn">COPY</button>
+                <div class="terminal-output" id="terminal-out">// Waiting for target...</div>
             </div>
         </div>
     </div>
