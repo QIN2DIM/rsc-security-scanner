@@ -2,18 +2,17 @@
 
 A browser extension for detecting **React Server Components (RSC)** and **Next.js App Router** fingerprints.
 
-| SCANNER                                           | EXPLOIT                                                      |
-| ------------------------------------------------- | ------------------------------------------------------------ |
-| ![](./docs/assets/PixPin_2025-12-06_10-37-32.png) | <img src="./docs/assets/PixPin_2025-12-06_10-48-00.png" style="zoom:98%;" /> |
-
-## Features
+[FOFA Search Guide](./docs/fofa_guide.md) - Learn how to use FOFA to find vulnerable RSC sites while excluding Cloudflare/WAF protection.
 
 - 🔍 **Passive Scan** - Automatically detect RSC/Next.js indicators in page content
 - 🎯 **Active Fingerprint** - Probe server responses with `RSC: 1` header
 - 🛡️ **WAF Detection** - Identify common WAFs (Cloudflare, AWS, Akamai, etc.)
 - ⚡ **RCE Exploit** - Test CVE vulnerabilities in Next.js Server Actions
 
----
+| SCANNER                                           | EXPLOIT                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| ![](./docs/assets/PixPin_2025-12-06_10-37-32.png) | <img src="./docs/assets/PixPin_2025-12-06_10-48-00.png" style="zoom:98%;" /> |
+
 
 ## Installation
 
@@ -32,8 +31,6 @@ A browser extension for detecting **React Server Components (RSC)** and **Next.j
 3. Click **Add** to confirm installation
 
 > ✅ The Firefox extension is signed and can be permanently installed.
-
----
 
 ## Usage
 
@@ -83,7 +80,6 @@ To create a signed Firefox extension, you need Mozilla AMO API credentials:
 
 </details>
 
----
 
 ## License
 
