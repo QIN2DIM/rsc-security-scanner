@@ -1,0 +1,36 @@
+{
+  "name": "rsc-security-scanner",
+  "version": "1.0.0",
+  "description": "A browser extension for detecting React Server Components (RSC) and Next.js App Router fingerprints",
+  "private": true,
+  "scripts": {
+    "build": "bash build.sh dev",
+    "build:dev": "bash build.sh dev",
+    "build:release": "bash build.sh release",
+    "lint": "web-ext lint --source-dir=./src --ignore-files=manifest.firefox.json",
+    "run:firefox": "web-ext run --source-dir=./src --firefox=firefoxdeveloperedition"
+  },
+  "devDependencies": {
+    "web-ext": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QIN2DIM/rsc-security-scanner"
+  },
+  "keywords": [
+    "browser-extension",
+    "firefox",
+    "chrome",
+    "react-server-components",
+    "nextjs",
+    "security",
+    "fingerprint"
+  ],
+  "license": "GPL-3.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["spawn-sync"]
+  }
+}

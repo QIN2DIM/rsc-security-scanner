@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "RSC Fingerprint Detector",
-  "version": "1.0",
+  "version": "1.0.2",
   "description": "检测 React Server Components (RSC) 及 Next.js App Router 指纹",
   "permissions": [
     "activeTab",
